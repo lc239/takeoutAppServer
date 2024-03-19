@@ -1,0 +1,14 @@
+spring:
+  r2dbc:
+    password: 123456
+    username: root
+    url: r2dbc:mysql://localhost:3306/takeoutapp?serverZoneId=Asia/Shanghai #添加时区
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 5000
+  logging:
+    level:
+      org.springframework.r2dbc: debug
+  jackson:
+    default-property-inclusion: non_null #null值不转json
