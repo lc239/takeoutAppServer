@@ -13,13 +13,6 @@ import reactor.core.publisher.Mono;
 public class StaticResourceFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        System.out.println(0);
-        System.out.println(exchange.getRequest().getPath().pathWithinApplication());
-        if (exchange.getRequest().getURI().getPath().equals("/")) {
-            return Mono.defer(() -> ((DefaultWebFilterChain) chain).getHandler().handle(
-                    exchange.mutate().request(exchange.getRequest().mutate().path("/index.html").build()).build()
-            ));
-        }
         //静态资源直接返回
         if(
                 exchange.getRequest().getPath().pathWithinApplication().toString().endsWith(".js") ||
