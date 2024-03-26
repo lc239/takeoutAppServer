@@ -10,6 +10,7 @@ import com.lc.takeoutApp.service.RestaurantService;
 import com.lc.takeoutApp.service.UserService;
 import com.lc.takeoutApp.utils.AliOssUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -32,9 +33,6 @@ public class RestaurantServiceImpl implements RestaurantService {
     RestaurantRepository restaurantRepository;
 
     @Autowired
-    MenuRepository menuRepository;
-
-    @Autowired
     AliOssUtil aliOssUtil;
 
     private final String DEFAULT_IMAGE_FILENAME = "default_restaurant_img.png";
@@ -50,13 +48,24 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    public Flux<Restaurant> findAllByPrefix(String prefix, int size) {
+        return restaurantRepository.findByNameStartingWith(prefix, PageRequest.of(0, size));
+    }
+
+    @Override
     public Mono<Restaurant> register(Long userId, Restaurant restaurant) {
         return userRestaurantRepository.findByUserId(userId).hasElement().flatMap(aBoolean -> {
             if(aBoolean){
                 return Mono.empty();
             }
             else {
-                restaurant.setCategories(new ArrayList<>()); //初始化
+                //初始化
+                restaurant.setCategories(new ArrayList<>());
+                restaurant.setRate(0L);
+                restaurant.setDeliveryPrice(0L);
+                restaurant.setSaleNum(0L);
+                restaurant.setRateCount(0L);
+                restaurant.setImageFilename(DEFAULT_IMAGE_FILENAME);
                 return restaurantRepository.save(restaurant)
                         .doOnNext(restaurant1 -> userService.changeRole(userId, true, true).subscribe()) //用户变成商家
                         .doOnNext(savedRestaurant -> userRestaurantRepository.save(new UserRestaurant(null, userId, savedRestaurant.getId())).subscribe()); //保存用户店铺关系

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 @Data
 public class User {
 
+    @JsonIgnore
     @Id
     private Long id;
     private String username;

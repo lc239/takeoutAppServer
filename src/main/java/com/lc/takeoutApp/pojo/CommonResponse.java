@@ -1,5 +1,7 @@
 package com.lc.takeoutApp.pojo;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.lc.takeoutApp.view.View;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@JsonView(View.class)
 public class CommonResponse<T> {
     private Integer code;
     private String message;

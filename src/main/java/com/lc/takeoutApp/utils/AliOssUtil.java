@@ -7,6 +7,7 @@ import com.aliyun.oss.OSSException;
 import com.aliyun.oss.common.auth.CredentialsProvider;
 import com.aliyun.oss.common.auth.CredentialsProviderFactory;
 import com.aliyun.oss.model.CannedAccessControlList;
+import com.aliyun.oss.model.ObjectMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,8 @@ public class AliOssUtil {
 
     public boolean upload(String objectName, InputStream inputStream){
         try {
+            ObjectMetadata meta = new ObjectMetadata();
+            meta.setCacheControl("private"); //设置私有缓存
             ossClient.putObject(bucketName, objectName, inputStream);
             ossClient.setObjectAcl(bucketName, objectName, CannedAccessControlList.PublicRead); //设置公共读
         } catch (OSSException oe){

@@ -34,6 +34,8 @@ public class MenuServiceImpl implements MenuService {
     public Mono<Restaurant> addMenu(Long restaurantId, Menu menu, int categoryIndex) {
         return restaurantRepository.findById(restaurantId)
                 .filter(restaurant -> restaurant.getCategories().size() > categoryIndex)
+                .filter(r -> menu.getName().length() <= 20)
+                .filter(r -> menu.getDescription().length() <= 100)
                 .doOnNext(restaurant -> menu.setImageFilename(DEFAULT_IMAGE_FILENAME)) //设置默认值
                 .doOnNext(restaurant -> restaurant.getCategories().get(categoryIndex).getMenus().add(menu))
                 .flatMap(restaurant -> restaurantRepository.save(restaurant));

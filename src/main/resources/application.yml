@@ -12,3 +12,5 @@ spring:
       org.springframework.r2dbc: debug
   jackson:
     default-property-inclusion: non_null #null值不转json
+sever:
+  port: 8080

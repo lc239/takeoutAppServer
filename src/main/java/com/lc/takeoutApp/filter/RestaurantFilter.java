@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+import org.springframework.web.server.handler.DefaultWebFilterChain;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
@@ -35,9 +36,9 @@ public class RestaurantFilter implements WebFilter {
                 restaurantPattern.matches(pathWithinApplication)
         ){
             //没有说明上一层token过滤器失效调用此处
-            if(request.getHeaders().get("userId") == null){
-                return Mono.empty();
-            }
+//            if(request.getHeaders().get("userId") == null){
+//                return Mono.defer(() -> ((DefaultWebFilterChain) chain).getHandler().handle(exchange));
+//            }
             return userRestaurantRepository.findByUserId(Long.valueOf(request.getHeaders().get("userId").get(0)))
                     .map(UserRestaurant::getRestaurantId)
                     .map(restaurantId -> request.mutate().header("restaurantId", String.valueOf(restaurantId)).build())

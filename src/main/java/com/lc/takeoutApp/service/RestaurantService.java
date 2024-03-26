@@ -10,6 +10,7 @@ import java.io.InputStream;
 public interface RestaurantService {
     Mono<Restaurant> findByRestaurantId(Long restaurantId);
     Flux<Restaurant> findAllBy(Pageable pageable);
+    Flux<Restaurant> findAllByPrefix(String prefix, int size);
     Mono<Restaurant> register(Long userId, Restaurant restaurant);
     Mono<Restaurant> addCategory(Long restaurantId, String name);
     Mono<Restaurant> deleteCategory(Long restaurantId, int index);

@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -45,8 +46,12 @@ public class UserServiceImpl implements UserService {
                 return Mono.empty();
             }
             else{
-                //密码加密
-                user.setPassword(Md5Util.md5DigestAsHex(user.getPassword()));
+                user.setPassword(Md5Util.md5DigestAsHex(user.getPassword()));// 密码加密
+                //初始化
+                user.setAddresses(new ArrayList<>());
+                user.setAvatarFilename(DEFAULT_AVATAR_FILENAME);
+                user.setIsDeliveryMan(false);
+                user.setIsSeller(false);
                 return userRepository.save(user);
             }
         });

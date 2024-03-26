@@ -1,14 +1,13 @@
 package com.lc.takeoutApp.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.lc.takeoutApp.pojo.CommonResponse;
-import com.lc.takeoutApp.pojo.Order;
 import com.lc.takeoutApp.pojo.Restaurant;
-import com.lc.takeoutApp.pojo.RestaurantComment;
 import com.lc.takeoutApp.pojo.jsonEntity.Menu;
 import com.lc.takeoutApp.service.MenuService;
 import com.lc.takeoutApp.service.OrderService;
 import com.lc.takeoutApp.service.RestaurantService;
-import com.lc.takeoutApp.service.UserService;
+import com.lc.takeoutApp.view.View;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.data.domain.PageRequest;
@@ -29,18 +28,18 @@ public class RestaurantController {
     @Autowired
     OrderService orderService;
 
-    @GetMapping("/info")
-    Mono<CommonResponse> getRestaurant(@RequestHeader("restaurantId") Long restaurantId){
-        return restaurantService.findByRestaurantId(restaurantId)
-                .map(CommonResponse::success)
-                .defaultIfEmpty(CommonResponse.error("查询不存在"));
-    }
-
     @PostMapping("/register")
     Mono<CommonResponse> register(@RequestHeader("userId") Long userId, @RequestBody Restaurant restaurant){
         return restaurantService.register(userId, restaurant)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("注册失败，请换名重试"));
+    }
+
+    @GetMapping("/info")
+    Mono<CommonResponse> getRestaurant(@RequestHeader("restaurantId") Long restaurantId){
+        return restaurantService.findByRestaurantId(restaurantId)
+                .map(CommonResponse::success)
+                .defaultIfEmpty(CommonResponse.error("查询不存在"));
     }
 
     @GetMapping("/info/{restaurantId}")
@@ -50,9 +49,19 @@ public class RestaurantController {
                 .defaultIfEmpty(CommonResponse.error("查询不存在"));
     }
 
+    //此方法获取的是预览
+    @JsonView(View.RestaurantPreviewView.class)
     @GetMapping("/info/{pageOffset}/{pageSize}")
     Mono<CommonResponse> getRestaurants(@PathVariable("pageOffset") int pageOffset, @PathVariable("pageSize") int pageSize){
         return restaurantService.findAllBy(PageRequest.of(pageOffset, pageSize))
+                .collectList()
+                .map(CommonResponse::success);
+    }
+
+    @JsonView(View.RestaurantSearchView.class)
+    @GetMapping("/search/{size}/{prefix}")
+    Mono<CommonResponse> searchRestaurants(@PathVariable("size") int size, @PathVariable("prefix") String prefix){
+        return restaurantService.findAllByPrefix(prefix, size)
                 .collectList()
                 .map(restaurants -> CommonResponse.success(restaurants))
                 .defaultIfEmpty(CommonResponse.error("未查询到结果"));
@@ -109,7 +118,9 @@ public class RestaurantController {
             @PathVariable("index") int categoryIndex
     ){
         return menuService.addMenu(restaurantId, menu, categoryIndex)
-                .map(restaurant -> CommonResponse.success())
+                .map(restaurant -> CommonResponse.success(
+                            restaurant.getCategories().get(categoryIndex).getMenus().get(restaurant.getCategories().get(categoryIndex).getMenus().size() - 1)
+                    ))
                 .defaultIfEmpty(CommonResponse.error("添加失败，请检查菜品规则"));
     }
 

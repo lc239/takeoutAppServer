@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+import org.springframework.web.server.handler.DefaultWebFilterChain;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
@@ -44,17 +45,23 @@ public class TokenFilter implements WebFilter {
         ){
             List<String> auths = request.getHeaders().get("Authorization");
             //认证失败使用此流
-            Mono<ServerWebExchange> unAuth = Mono.just(exchange).doOnNext(exchange1 -> response.setStatusCode(HttpStatusCode.valueOf(401)));
+//            Mono<Void> unAuth = Mono.defer(() ->{
+//                        response.setStatusCode(HttpStatusCode.valueOf(401));
+//                System.out.println(exchange.getResponse().getStatusCode());
+//                return ((DefaultWebFilterChain) chain).getHandler().handle(exchange.mutate().response(response).build());
+//            });
+            Mono<Void> unAuth = Mono.just(exchange).doOnNext(exchange1 -> response.setStatusCode(HttpStatusCode.valueOf(401))).then(Mono.empty());
+//            Mono<Void> unAuth = Mono.just(exchange).doOnNext(exchange1 -> response.setStatusCode(HttpStatusCode.valueOf(401)));
             if(auths == null){
-                return unAuth.flatMap(chain::filter);
+                return unAuth;
             }
             String token = auths.get(0).substring(7);
             return redisTemplate.opsForValue().get(token).map(Long::valueOf)
                     .map(id -> exchange.mutate().request(
                             request.mutate().header("userId", String.valueOf(id)).build()
                     ).build())
-                    .switchIfEmpty(unAuth) //没查到说明token过期，转到未认证流
-                    .flatMap(chain::filter);
+                    .flatMap(chain::filter)
+                    .switchIfEmpty(unAuth); //没查到说明token过期，转到未认证流
 //            try{
 ////                id = ((Integer) JwtUtil.parseToken(token).get("id")).longValue();
 //            } catch (TokenExpiredException tee){
