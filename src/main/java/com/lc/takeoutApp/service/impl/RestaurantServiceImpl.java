@@ -3,7 +3,6 @@ package com.lc.takeoutApp.service.impl;
 import com.lc.takeoutApp.pojo.Restaurant;
 import com.lc.takeoutApp.pojo.UserRestaurant;
 import com.lc.takeoutApp.pojo.jsonEntity.Category;
-import com.lc.takeoutApp.repository.MenuRepository;
 import com.lc.takeoutApp.repository.RestaurantRepository;
 import com.lc.takeoutApp.repository.UserRestaurantRepository;
 import com.lc.takeoutApp.service.RestaurantService;
@@ -61,10 +60,6 @@ public class RestaurantServiceImpl implements RestaurantService {
             else {
                 //初始化
                 restaurant.setCategories(new ArrayList<>());
-                restaurant.setRate(0L);
-                restaurant.setDeliveryPrice(0L);
-                restaurant.setSaleNum(0L);
-                restaurant.setRateCount(0L);
                 restaurant.setImageFilename(DEFAULT_IMAGE_FILENAME);
                 return restaurantRepository.save(restaurant)
                         .doOnNext(restaurant1 -> userService.changeRole(userId, true, true).subscribe()) //用户变成商家

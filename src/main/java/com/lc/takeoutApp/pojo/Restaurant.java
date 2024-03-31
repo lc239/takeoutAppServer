@@ -36,5 +36,5 @@ public class Restaurant {
     private Instant createTime;
     private ArrayList<Category> categories;
     @JsonView(View.RestaurantPreviewView.class)
-    private Long deliveryPrice;
+    private Integer deliveryPrice;
 }

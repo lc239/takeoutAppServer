@@ -8,11 +8,15 @@ import org.springframework.web.server.WebFilterChain;
 import org.springframework.web.server.handler.DefaultWebFilterChain;
 import reactor.core.publisher.Mono;
 
-@Order(1)
+@Order(2)
 @Component
 public class StaticResourceFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        System.out.println(exchange.getRequest().getPath().pathWithinApplication());
+        if(exchange.getRequest().getPath().pathWithinApplication().toString().equals("/path")){
+            return Mono.defer(() -> ((DefaultWebFilterChain) chain).getHandler().handle(exchange));
+        }
         //静态资源直接返回
         if(
                 exchange.getRequest().getPath().pathWithinApplication().toString().endsWith(".js") ||

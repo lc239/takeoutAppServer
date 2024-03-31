@@ -1,6 +1,7 @@
 package com.lc.takeoutApp.service;
 
 import com.lc.takeoutApp.pojo.User;
+import com.lc.takeoutApp.pojo.jsonEntity.Address;
 import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
@@ -15,4 +16,5 @@ public interface UserService {
     Mono<User> changeRole(Long id, Boolean isSeller, Boolean set);
     Mono<String> uploadAvatar(Long id, String filename, InputStream inputStream);
     Mono<User> updateUsernameById(String username, Long id);
+    Mono<User> addAddress(Long id, Address address);
 }

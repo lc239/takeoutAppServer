@@ -1,6 +1,7 @@
 package com.lc.takeoutApp.controller;
 
 import com.lc.takeoutApp.pojo.*;
+import com.lc.takeoutApp.pojo.jsonEntity.Address;
 import com.lc.takeoutApp.service.OrderService;
 import com.lc.takeoutApp.service.RestaurantCommentService;
 import com.lc.takeoutApp.service.UserService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/user")
@@ -116,28 +118,19 @@ public class UserController {
 //                .defaultIfEmpty(CommonResponse.error("查询失败"));
 //    }
 
-    //骑手接单
-//    @PatchMapping("/order/take/{orderId}")
-//    Mono<CommonResponse> takeOrder(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId){
-//        return orderService.takeOrderByD(userId, orderId)
-//                .map(order -> CommonResponse.success(order))
-//                .defaultIfEmpty(CommonResponse.error("接单失败"));
-//    }
-
-//    //用户请求订单
-//    @PutMapping("/order/put")
-//    Mono<CommonResponse> putOrder(@RequestHeader("userId") Long userId, @RequestBody Order order){
-//        order.setCreateTime(Instant.now());
-//        return orderService.putOrder(userId, order)
-//                .map(aBoolean -> {
-//                    if(aBoolean){
-//                        return CommonResponse.success();
-//                    }
-//                    else{
-//                        return CommonResponse.error("下单失败，请刷新重试");
-//                    }
-//                });
-//    }
+    //用户请求订单
+    @PutMapping("/order/put/{restaurantId}")
+    Mono<CommonResponse> putOrder(@RequestHeader("userId") Long userId,@PathVariable("restaurantId") Long restaurantId, @RequestBody Order order){
+        return orderService.putOrder(userId, restaurantId, order)
+                .map(aBoolean -> {
+                    if(aBoolean){
+                        return CommonResponse.success();
+                    }
+                    else{
+                        return CommonResponse.error("下单失败，可能商家不在线或菜单已更改");
+                    }
+                });
+    }
 
     @DeleteMapping("/order/cancel/{orderId}")
     Mono<CommonResponse> cancelOrder(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId){
@@ -152,5 +145,12 @@ public class UserController {
         return userService.updateUsernameById(user.getUsername(), userId)
                 .map(user1 -> CommonResponse.success())
                 .defaultIfEmpty(CommonResponse.error("更新失败，请检查参数"));
+    }
+
+    @PatchMapping("/address/add")
+    Mono<CommonResponse> addAddress(@RequestHeader("userId") Long userId, @RequestBody Address address){
+        return userService.addAddress(userId, address)
+                .map(user -> CommonResponse.success())
+                .defaultIfEmpty(CommonResponse.error("请检查添加地址规则"));
     }
 }

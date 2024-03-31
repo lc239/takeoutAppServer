@@ -103,13 +103,28 @@ public class RestaurantController {
                 .defaultIfEmpty(CommonResponse.error("参数错误"));
     }
 
-//    @PutMapping("/order/take/{orderId}")
-//    Mono<CommonResponse> takeOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
-//        return orderService.takeOrderByR(restaurantId, orderId).map(aBoolean -> {
-//            if(aBoolean) return CommonResponse.success();
-//            else return CommonResponse.error("接单失败，可能已取消");
-//        });
-//    }
+    @PutMapping("/order/take/{orderId}")
+    Mono<CommonResponse> takeOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
+        return orderService.takeOrderByR(restaurantId, orderId).map(aBoolean -> {
+            if(aBoolean) {
+                return CommonResponse.success();
+            } else {
+                return CommonResponse.error("接单失败，可能已取消");
+            }
+        });
+    }
+
+    @DeleteMapping("/order/delete/{orderId}")
+    Mono<CommonResponse> rejectOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
+        return orderService.rejectOrder(restaurantId, orderId).thenReturn(CommonResponse.success());
+    }
+
+    @GetMapping("/order/take/{orderId}")
+    Mono<CommonResponse> getNotTakenOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
+        return orderService.findNotTakenOrder(restaurantId, orderId)
+                .map(CommonResponse::success)
+                .defaultIfEmpty(CommonResponse.error("未查询到该订单"));
+    }
 
     @PatchMapping("/menu/add/{index}")
     Mono<CommonResponse> add(

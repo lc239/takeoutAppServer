@@ -1,11 +1,14 @@
 package com.lc.takeoutApp.pojo;
 
-import com.google.gson.annotations.JsonAdapter;
-import com.lc.takeoutApp.gsonAdapter.OrderAdapter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.lc.takeoutApp.pojo.jsonEntity.Address;
 import com.lc.takeoutApp.pojo.jsonEntity.OrderedMenu;
+import com.lc.takeoutApp.view.View;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 @NoArgsConstructor
 @Table("`order`")
 public class Order {
+    @JsonView(View.OrderDeliveryView.class)
     private String id;
     private Long userId;
     private Long restaurantId;
@@ -24,7 +28,12 @@ public class Order {
     private Integer packPrice;
     private Integer deliveryPrice;
     private Long price;
-    private String address;
+    @JsonView(View.OrderDeliveryView.class)
+    private Address address;
+    @JsonView(View.OrderDeliveryView.class)
     private Instant createTime;
     private Instant completeTime;
+    @Transient
+    @JsonIgnore
+    private Boolean taken; //表示是否被商家接单，被商家接单的会被加入redis的list中
 }

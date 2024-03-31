@@ -15,7 +15,7 @@ import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
 
-@Order(3)
+@Order(4)
 @Component
 public class RestaurantFilter implements WebFilter {
 

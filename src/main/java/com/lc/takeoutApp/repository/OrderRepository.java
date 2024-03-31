@@ -8,9 +8,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface OrderRepository extends R2dbcRepository<Order, Long> {
-    Mono<Order> findById(String id);
+public interface OrderRepository extends R2dbcRepository<Order, String> {
+//    Flux<Order> find
     Flux<Order> findAllByUserId(Long userId);
     Flux<Order> findAllByUserId(Long userId, Pageable pageable);
-    Mono<Boolean> existsById(String id);
 }

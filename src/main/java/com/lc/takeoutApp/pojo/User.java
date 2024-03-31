@@ -2,10 +2,7 @@ package com.lc.takeoutApp.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.annotations.JsonAdapter;
-import com.lc.takeoutApp.gsonAdapter.UserAdapter;
 import com.lc.takeoutApp.pojo.jsonEntity.Address;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -17,7 +14,6 @@ import java.util.ArrayList;
 @Data
 public class User {
 
-    @JsonIgnore
     @Id
     private Long id;
     private String username;

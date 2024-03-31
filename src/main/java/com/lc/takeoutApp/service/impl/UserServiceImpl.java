@@ -1,6 +1,7 @@
 package com.lc.takeoutApp.service.impl;
 
 import com.lc.takeoutApp.pojo.User;
+import com.lc.takeoutApp.pojo.jsonEntity.Address;
 import com.lc.takeoutApp.repository.UserRepository;
 import com.lc.takeoutApp.service.UserService;
 import com.lc.takeoutApp.utils.AliOssUtil;
@@ -60,8 +61,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<User> changeRole(Long id, Boolean isSeller, Boolean set) {
         return userRepository.findById(id).flatMap(user -> {
-            if(isSeller) user.setIsSeller(set);
-            else user.setIsDeliveryMan(set);
+            if(isSeller && (user.getIsSeller() ^ set)){
+                user.setIsSeller(set);
+            } else if(!isSeller && (user.getIsDeliveryMan() ^ set)){
+                user.setIsDeliveryMan(set);
+            } else {
+                return Mono.just(user);
+            }
             return userRepository.save(user);
         });
     }
@@ -96,6 +102,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<User> updateUsernameById(String username, Long id) {
         return findById(id).doOnNext(user -> user.setUsername(username)).flatMap(user -> userRepository.save(user));
+    }
+
+    @Override
+    public Mono<User> addAddress(Long id, Address address) {
+        return userRepository.findById(id)
+                .filter(user -> user.getAddresses().size() <= 6)
+                .filter(user -> address.getAddress().length() <= 100 && address.getName().length() <= 4)
+                .doOnNext(user -> user.getAddresses().add(address))
+                .flatMap(user -> userRepository.save(user));
     }
 
     @Override
