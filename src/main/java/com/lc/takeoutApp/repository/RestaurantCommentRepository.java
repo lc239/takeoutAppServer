@@ -10,5 +10,4 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface RestaurantCommentRepository extends R2dbcRepository<RestaurantComment, Long> {
     Flux<RestaurantComment> findAllByRestaurantId(Long restaurantId, Pageable pageable);
-    Mono<Boolean> existsByOrderId(String orderId);
 }

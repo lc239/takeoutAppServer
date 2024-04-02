@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -29,6 +28,11 @@ public class DeliveryController {
         return deliveryService.findByUserId(userId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("还不是骑手哦"));
+    }
+
+    @GetMapping("/order/delivering")
+    Mono<CommonResponse<List<Order>>> getDeliveringOrders(@RequestHeader("userId") Long userId){
+        return orderService.findDeliveringOrders(userId).collectList().map(CommonResponse::success);
     }
 
     @PostMapping("/register")
@@ -56,7 +60,7 @@ public class DeliveryController {
 
     @PatchMapping("/order/complete/{orderId}")
     Mono<CommonResponse<Order>> completeOrder(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId){
-        return orderService.completeOrder(userId, orderId)
+        return deliveryService.completeOrder(userId, orderId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("订单错误"));
     }

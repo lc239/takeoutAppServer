@@ -6,8 +6,6 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.util.ArrayList;
-
 @Data
 @AllArgsConstructor
 @Table("delivery_man")
@@ -17,6 +15,10 @@ public class DeliveryMan {
     private Long id;
     @JsonIgnore
     private Long userId;
-    private ArrayList<String> deliveringOrders;
     private Long completeCount;
+
+    public Long completeOne(){
+        completeCount++;
+        return completeCount;
+    }
 }

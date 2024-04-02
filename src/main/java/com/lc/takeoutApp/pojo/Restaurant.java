@@ -37,4 +37,9 @@ public class Restaurant {
     private ArrayList<Category> categories;
     @JsonView(View.RestaurantPreviewView.class)
     private Integer deliveryPrice;
+
+    public void addComment(int rate){
+        this.rate += rate;
+        this.rateCount++;
+    }
 }

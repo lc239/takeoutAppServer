@@ -13,10 +13,10 @@ public class RestaurantComment {
     @Id
     private Long id;
     private Long userId;
+    private String username;
     private Long restaurantId;
     private String content;
     private Integer rate;
     private List<String> images;
-    private String orderId;
     private Instant createTime;
 }

@@ -8,12 +8,15 @@ import com.lc.takeoutApp.service.UserService;
 import com.lc.takeoutApp.utils.Md5Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.multipart.*;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/user")
@@ -98,25 +101,16 @@ public class UserController {
                 .defaultIfEmpty(CommonResponse.error("参数错误"));
     }
 
-    //需要有订单才能评论，待完成
-    @PutMapping("/comment/{orderId}")
-    Mono<CommonResponse> addComment(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId, @RequestBody RestaurantComment comment){
-        return commentService.addComment(userId, orderId, comment)
-                .map(comment1 -> CommonResponse.success(comment1))
-                .defaultIfEmpty(CommonResponse.error("参数错误"));
+    @GetMapping("/orders/{pageOffset}/{pageSize}")
+    Mono<CommonResponse> getOrders(
+            @RequestHeader("userId") Long userId,
+            @PathVariable("pageOffset") int pageOffset,
+            @PathVariable("pageSize") int pageSize
+    ){
+        return orderService.findHistoryOrders(userId, PageRequest.of(pageOffset, pageSize).withSort(Sort.Direction.DESC, "createTime"))
+                .collectList()
+                .map(CommonResponse::success);
     }
-
-//    @GetMapping("/orders/{pageOffset}/{pageSize}")
-//    Mono<CommonResponse> getOrders(
-//            @RequestHeader("userId") Long userId,
-//            @PathVariable("pageOffset") int pageOffset,
-//            @PathVariable("pageSize") int pageSize
-//    ){
-//        return orderService.findOrders(userId, PageRequest.of(pageOffset, pageSize).withSort(Sort.Direction.DESC, "createTime"))
-//                .collectList()
-//                .map(orders -> CommonResponse.success(orders))
-//                .defaultIfEmpty(CommonResponse.error("查询失败"));
-//    }
 
     //用户请求订单
     @PutMapping("/order/put/{restaurantId}")
@@ -137,6 +131,18 @@ public class UserController {
         return null;
     }
 
+    @PutMapping("/order/comment/{orderId}")
+    Mono<CommonResponse<RestaurantComment>> commentOrder(
+            @RequestHeader("userId") Long userId,
+            @PathVariable("orderId") String orderId,
+            @RequestBody RestaurantComment comment
+    ){
+        comment.setUserId(userId);
+        return commentService.addComment(orderId, comment)
+                .map(CommonResponse::success)
+                .defaultIfEmpty(CommonResponse.error("评论失败"));
+    }
+
     @PutMapping("/update/username")
     Mono<CommonResponse> updateUsername(@RequestHeader("userId") Long userId, @RequestBody User user){
         if(user.getUsername().length() > 10 || user.getUsername().isEmpty()){
@@ -152,5 +158,13 @@ public class UserController {
         return userService.addAddress(userId, address)
                 .map(user -> CommonResponse.success())
                 .defaultIfEmpty(CommonResponse.error("请检查添加地址规则"));
+    }
+
+    @PutMapping("/address/set")
+    Mono<CommonResponse> setAddress(@RequestHeader("userId") Long userId, @RequestBody ArrayList<Address> addresses){
+        return userService.setAddress(userId, addresses).hasElement().map(aBoolean -> {
+            if(aBoolean) return CommonResponse.success();
+            else return CommonResponse.error("地址规则有误");
+        });
     }
 }

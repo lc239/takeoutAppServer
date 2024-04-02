@@ -114,6 +114,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Mono<User> setAddress(Long userId, ArrayList<Address> addresses) {
+        if(addresses.size() > 6) return Mono.empty();
+        return userRepository.findById(userId)
+                .doOnNext(user -> user.setAddresses(addresses))
+                .flatMap(user -> userRepository.save(user));
+    }
+
+    @Override
     public Mono<Boolean> setToken(String key, String value, Duration timeout) {
         return reactiveStringRedisTemplate.opsForValue().set(key, value, timeout);
     }

@@ -3,9 +3,11 @@ package com.lc.takeoutApp.controller;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.lc.takeoutApp.pojo.CommonResponse;
 import com.lc.takeoutApp.pojo.Restaurant;
+import com.lc.takeoutApp.pojo.RestaurantComment;
 import com.lc.takeoutApp.pojo.jsonEntity.Menu;
 import com.lc.takeoutApp.service.MenuService;
 import com.lc.takeoutApp.service.OrderService;
+import com.lc.takeoutApp.service.RestaurantCommentService;
 import com.lc.takeoutApp.service.RestaurantService;
 import com.lc.takeoutApp.view.View;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/restaurant")
@@ -27,6 +31,9 @@ public class RestaurantController {
 
     @Autowired
     OrderService orderService;
+
+    @Autowired
+    RestaurantCommentService commentService;
 
     @PostMapping("/register")
     Mono<CommonResponse> register(@RequestHeader("userId") Long userId, @RequestBody Restaurant restaurant){
@@ -65,6 +72,17 @@ public class RestaurantController {
                 .collectList()
                 .map(restaurants -> CommonResponse.success(restaurants))
                 .defaultIfEmpty(CommonResponse.error("未查询到结果"));
+    }
+
+    @GetMapping("/comment/{restaurantId}/{pageOffset}/{pageSize}")
+    Mono<CommonResponse<List<RestaurantComment>>> getComments(
+            @PathVariable("restaurantId") Long restaurantId,
+            @PathVariable("pageOffset") int pageOffset,
+            @PathVariable("pageSize") int pageSize
+    ){
+        return commentService.getComments(restaurantId, PageRequest.of(pageOffset, pageSize))
+                .collectList()
+                .map(CommonResponse::success);
     }
 
     @PatchMapping("/category/add/{name}")

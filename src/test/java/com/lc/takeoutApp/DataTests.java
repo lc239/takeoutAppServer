@@ -8,6 +8,7 @@ import com.lc.takeoutApp.repository.RestaurantCommentRepository;
 import com.lc.takeoutApp.repository.RestaurantRepository;
 import com.lc.takeoutApp.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.internal.matchers.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
@@ -46,5 +47,10 @@ class DataTests {
     @Autowired
     R2dbcCustomConversions r2dbcCustomConversions;
 
-
+    @Test
+    public void f() throws IOException {
+        Order order = new Order("1", 1L, 20L, 1L, null, new ArrayList<>(), 0, 0, 1L, new Address("", "", ""), Instant.now(), Instant.now(), false);
+        orderRepository.save(order).log().subscribe();
+        System.in.read();
+    }
 }

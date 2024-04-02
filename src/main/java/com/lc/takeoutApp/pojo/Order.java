@@ -8,6 +8,7 @@ import com.lc.takeoutApp.view.View;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -19,11 +20,15 @@ import java.util.ArrayList;
 @NoArgsConstructor
 @Table("`order`")
 public class Order {
+    @JsonIgnore
+    @Id
+    private Long id;
     @JsonView(View.OrderDeliveryView.class)
-    private String id;
+    private String orderId;
     private Long userId;
     private Long restaurantId;
     private Long deliveryManId;
+    private Long commentId;
     private ArrayList<OrderedMenu> menus;
     private Integer packPrice;
     private Integer deliveryPrice;

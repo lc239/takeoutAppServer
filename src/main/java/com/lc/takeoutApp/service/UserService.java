@@ -6,6 +6,8 @@ import reactor.core.publisher.Mono;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface UserService {
     Mono<User> findByPhone(String phone);
@@ -17,4 +19,5 @@ public interface UserService {
     Mono<String> uploadAvatar(Long id, String filename, InputStream inputStream);
     Mono<User> updateUsernameById(String username, Long id);
     Mono<User> addAddress(Long id, Address address);
+    Mono<User> setAddress(Long id, ArrayList<Address> addresses);
 }
