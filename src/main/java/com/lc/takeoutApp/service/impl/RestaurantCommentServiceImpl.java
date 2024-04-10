@@ -12,7 +12,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.Objects;
 
 @Service
 public class RestaurantCommentServiceImpl implements RestaurantCommentService {
@@ -33,6 +32,7 @@ public class RestaurantCommentServiceImpl implements RestaurantCommentService {
 
     @Override
     public Mono<RestaurantComment> addComment(String orderId, RestaurantComment comment) {
+        if(comment.getContent().length() > 100) return Mono.empty();
         return orderRepository.findByOrderId(orderId)
                 .filter(order -> order.getCommentId() == null)
                 .filter(order -> order.getUserId().equals(comment.getUserId()))
@@ -43,11 +43,11 @@ public class RestaurantCommentServiceImpl implements RestaurantCommentService {
                         .flatMap(user -> commentRepository.save(comment)
                                 .doOnNext(comment1 -> order.setCommentId(comment1.getId()))
                                 .flatMap(comment1 -> orderRepository.save(order))
+                                .thenReturn(comment)
                         )
-                )
+                );
 //                .flatMap(order -> restaurantRepository.findById(order.getRestaurantId())) //给店铺的数据更新，数据库触发器做了
 //                .doOnNext(restaurant -> restaurant.addComment(comment.getRate()))
-//                .flatMap(restaurant -> restaurantRepository.save(restaurant))
-                .thenReturn(comment);
+//                .flatMap(restaurant -> restaurantRepository.save(restaurant)
     }
 }

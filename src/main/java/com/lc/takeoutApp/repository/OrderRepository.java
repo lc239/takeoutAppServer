@@ -12,5 +12,6 @@ import reactor.core.publisher.Mono;
 public interface OrderRepository extends R2dbcRepository<Order, String> {
     Flux<Order> findAllByUserId(Long userId);
     Flux<Order> findAllByUserId(Long userId, Pageable pageable);
+    Flux<Order> findAllByUserIdAndCompleteTimeIsNull(Long userId);
     Mono<Order> findByOrderId(String orderId);
 }

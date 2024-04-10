@@ -14,6 +14,7 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Component
@@ -61,7 +62,11 @@ public class MyWebSocketHandler implements WebSocketHandler {
         Long userId = Long.parseLong(strings[1]);
         wsMap.put(userId, session); //发送消息把对应id和session放进map
 
-        Flux<WebSocketMessage> output = session.receive()
+        Flux<WebSocketMessage> output = session.receive().map(webSocketMessage -> {
+            System.out.println(webSocketMessage.getPayloadAsText());
+            if(webSocketMessage.getPayloadAsText().equals("\"ping\"")) return session.pongMessage(dataBufferFactory -> dataBufferFactory.wrap("pong".getBytes(StandardCharsets.UTF_8)));
+            else return webSocketMessage;
+        })
                 .doOnTerminate(() -> wsMap.remove(userId));
         return session.send(output);
     }

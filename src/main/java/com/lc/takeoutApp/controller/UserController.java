@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -112,18 +113,17 @@ public class UserController {
                 .map(CommonResponse::success);
     }
 
+    @GetMapping("/orders/delivering")
+    Mono<CommonResponse<List<Order>>> getDeliveringOrders(@RequestHeader("userId") Long userId){
+        return orderService.findUsersDeliveringOrders(userId).collectList().map(CommonResponse::success);
+    }
+
     //用户请求订单
     @PutMapping("/order/put/{restaurantId}")
-    Mono<CommonResponse> putOrder(@RequestHeader("userId") Long userId,@PathVariable("restaurantId") Long restaurantId, @RequestBody Order order){
+    Mono<CommonResponse<Order>> putOrder(@RequestHeader("userId") Long userId,@PathVariable("restaurantId") Long restaurantId, @RequestBody Order order){
         return orderService.putOrder(userId, restaurantId, order)
-                .map(aBoolean -> {
-                    if(aBoolean){
-                        return CommonResponse.success();
-                    }
-                    else{
-                        return CommonResponse.error("下单失败，可能商家不在线或菜单已更改");
-                    }
-                });
+                .map(CommonResponse::success)
+                .defaultIfEmpty(CommonResponse.error("下单失败，商家可能已下线"));
     }
 
     @DeleteMapping("/order/cancel/{orderId}")

@@ -39,6 +39,5 @@ public class Order {
     private Instant createTime;
     private Instant completeTime;
     @Transient
-    @JsonIgnore
     private Boolean taken; //表示是否被商家接单，被商家接单的会被加入redis的list中
 }
