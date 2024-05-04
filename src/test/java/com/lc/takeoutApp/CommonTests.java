@@ -20,5 +20,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 
 public class CommonTests {
-
+    @Test
+    public void errorTest(){
+        Mono.just(1).flatMap(integer -> Mono.error(new Throwable("aaa")))
+                .onErrorResume(throwable -> Mono.just(throwable.getMessage()))
+                .subscribe(System.out::println);
+    }
 }

@@ -71,6 +71,7 @@ public class OrderServiceImpl implements OrderService {
                 //通知商家有订单
                 userRestaurantRepository.findByRestaurantId(restaurantId)
                         .map(userRestaurant -> wsMap.get(userRestaurant.getUserId()))
+                        .filter(Objects::nonNull)
                         .flatMap(webSocketSession -> webSocketSession.send(Mono.just(webSocketSession.textMessage(gson.toJson(new WebSocketResponse<>(0, order.getCreateTime(), order.getOrderId()))))))
                         .subscribe();
                 redisTemplate.opsForList().rightPush("user:delivering:" + userId, order.getOrderId()).subscribe(); //添加到用户的配送单列表中
@@ -106,7 +107,9 @@ public class OrderServiceImpl implements OrderService {
                         .doOnNext(l -> opsForValue.set(orderId, gson.toJson(order)).subscribe()) //修改状态
                         .doOnNext(l -> { //发送消息
                             WebSocketSession webSocketSession = wsMap.get(order.getUserId());
-                            webSocketSession.send(Mono.just(webSocketSession.textMessage(gson.toJson(WebSocketResponse.takeOrderByRResponse(orderId))))).subscribe();
+                            if(webSocketSession != null){
+                                webSocketSession.send(Mono.just(webSocketSession.textMessage(gson.toJson(WebSocketResponse.takeOrderByRResponse(orderId))))).subscribe();
+                            }
                         }))
                 .map(l -> true)
                 .defaultIfEmpty(false);
@@ -121,8 +124,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Flux<Order> findDeliveringOrders(Long userId) {
-        return redisTemplate.opsForList().range(userId.toString(), 0L, -1L)
+    public Flux<Order> findDeliveringOrders(Long deliveryId) {
+        return redisTemplate.opsForList().range(deliveryId.toString(), 0L, -1L)
                 .flatMap(orderId -> redisTemplate.opsForValue().get(orderId))
                 .map(s -> gson.fromJson(s, Order.class));
     }
@@ -138,36 +141,39 @@ public class OrderServiceImpl implements OrderService {
                 .map(s -> gson.fromJson(s, Order.class))
                 .filter(order -> restaurantId.equals(order.getRestaurantId()))
                 .map(order -> wsMap.get(order.getUserId()))
+                .filter(Objects::nonNull)
                 .doOnNext(webSocketSession -> webSocketSession.send(Mono.just(webSocketSession.textMessage(gson.toJson(WebSocketResponse.rejectOrderResponse())))).subscribe())
                 .flatMap(ws -> redisTemplate.opsForValue().delete(orderId))
                 .defaultIfEmpty(false);
     }
 
     @Override
-    public Mono<Order> takeOrderByD(Long userId, String orderId) {
+    public Mono<Order> takeOrderByD(Long deliveryId, String orderId) {
         ReactiveListOperations<String, String> opsForList = redisTemplate.opsForList();
         ReactiveValueOperations<String, String> opsForValue = redisTemplate.opsForValue();
         return opsForList.remove(redisListKey, 1, orderId) //从待接单移除
                 .filter(aLong -> aLong.equals(1L))
-                .flatMap(aLong -> opsForList.rightPush(userId.toString(), orderId)) //添加到骑手接单列表
+                .flatMap(aLong -> opsForList.rightPush(deliveryId.toString(), orderId)) //添加到骑手接单列表
                 .flatMap(along -> opsForValue.get(orderId))
                 .map(s -> gson.fromJson(s, Order.class))
-                .doOnNext(order -> order.setDeliveryManId(userId))
+                .doOnNext(order -> order.setDeliveryManId(deliveryId))
                 .flatMap(order -> opsForValue.set(orderId, gson.toJson(order)).thenReturn(order));
     }
 
     //存入订单后有数据库触发器加销量1
     @Override
-    public Mono<Order> completeOrder(Long userId, String orderId) {
+    public Mono<Order> completeOrder(Long deliveryId, String orderId) {
         ReactiveListOperations<String, String> opsForList = redisTemplate.opsForList();
         ReactiveValueOperations<String, String> opsForValue = redisTemplate.opsForValue();
-        return opsForList.remove(userId.toString(), 1, orderId)
+        return opsForList.remove(deliveryId.toString(), 1, orderId)
                 .filter(aLong -> aLong.equals(1L))
                 .flatMap(aLong -> opsForValue.get(orderId))
                 .map(s -> gson.fromJson(s, Order.class))
                 .flatMap(order -> {
                     WebSocketSession session = wsMap.get(order.getUserId());
-                    session.send(Mono.just(session.textMessage(gson.toJson(WebSocketResponse.completeOrderResponse(orderId))))).subscribe(); //给用户通知
+                    if(session != null){
+                        session.send(Mono.just(session.textMessage(gson.toJson(WebSocketResponse.completeOrderResponse(orderId))))).subscribe(); //给用户通知
+                    }
                     order.setCompleteTime(Instant.now());
                     return orderRepository.save(order); //完成后保存到数据库
                 })

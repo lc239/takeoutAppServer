@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-@Order(3)
+@Order(2)
 @Component
 public class TokenFilter implements WebFilter {
 
@@ -33,6 +33,7 @@ public class TokenFilter implements WebFilter {
         ServerHttpResponse response = exchange.getResponse();
 
         PathContainer pathWithinApplication = request.getPath().pathWithinApplication();
+        System.out.println(pathWithinApplication);
 
         if (
                 !registerPattern.matches(pathWithinApplication) &&

@@ -24,21 +24,21 @@ public class DeliveryController {
     OrderService orderService;
 
     @GetMapping("/info")
-    Mono<CommonResponse<DeliveryMan>> getInfo(@RequestHeader("userId") Long userId){
-        return deliveryService.findByUserId(userId)
+    Mono<CommonResponse<DeliveryMan>> getInfo(@RequestHeader("deliveryId") Long deliveryId){
+        return deliveryService.findById(deliveryId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("还不是骑手哦"));
     }
 
     @GetMapping("/order/delivering")
-    Mono<CommonResponse<List<Order>>> getDeliveringOrders(@RequestHeader("userId") Long userId){
-        return orderService.findDeliveringOrders(userId).collectList().map(CommonResponse::success);
+    Mono<CommonResponse<List<Order>>> getDeliveringOrders(@RequestHeader("deliveryId") Long deliveryId){
+        return orderService.findDeliveringOrders(deliveryId).collectList().map(CommonResponse::success);
     }
 
-    @PostMapping("/register")
-    Mono<CommonResponse<DeliveryMan>> register(@RequestHeader("userId") Long userId){
-        return deliveryService.register(userId).map(CommonResponse::success);
-    }
+//    @PostMapping("/register")
+//    Mono<CommonResponse<DeliveryMan>> register(@RequestHeader("userId") Long userId){
+//        return deliveryService.register(userId).map(CommonResponse::success);
+//    }
 
     @JsonView(View.OrderDeliveryView.class)
     @GetMapping("/order/take/{indexStart}/{indexEnd}")
@@ -52,15 +52,15 @@ public class DeliveryController {
     }
 
     @PatchMapping("/order/take/{orderId}")
-    Mono<CommonResponse<Order>> takeOrder(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId){
-        return orderService.takeOrderByD(userId, orderId)
+    Mono<CommonResponse<Order>> takeOrder(@RequestHeader("deliveryId") Long deliveryId, @PathVariable("orderId") String orderId){
+        return orderService.takeOrderByD(deliveryId, orderId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("订单不存在或已被接单"));
     }
 
     @PatchMapping("/order/complete/{orderId}")
-    Mono<CommonResponse<Order>> completeOrder(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId){
-        return deliveryService.completeOrder(userId, orderId)
+    Mono<CommonResponse<DeliveryMan>> completeOrder(@RequestHeader("deliveryId") Long deliveryId, @PathVariable("orderId") String orderId){
+        return deliveryService.completeOrder(deliveryId, orderId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("订单错误"));
     }

@@ -46,11 +46,4 @@ class DataTests {
 
     @Autowired
     R2dbcCustomConversions r2dbcCustomConversions;
-
-    @Test
-    public void f() throws IOException {
-        Order order = new Order("1", 1L, 20L, 1L, null, new ArrayList<>(), 0, 0, 1L, new Address("", "", ""), Instant.now(), Instant.now(), false);
-        orderRepository.save(order).log().subscribe();
-        System.in.read();
-    }
 }

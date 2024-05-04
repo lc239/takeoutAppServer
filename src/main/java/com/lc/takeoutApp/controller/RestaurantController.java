@@ -2,6 +2,7 @@ package com.lc.takeoutApp.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.lc.takeoutApp.pojo.CommonResponse;
+import com.lc.takeoutApp.pojo.Order;
 import com.lc.takeoutApp.pojo.Restaurant;
 import com.lc.takeoutApp.pojo.RestaurantComment;
 import com.lc.takeoutApp.pojo.jsonEntity.Menu;
@@ -36,21 +37,21 @@ public class RestaurantController {
     RestaurantCommentService commentService;
 
     @PostMapping("/register")
-    Mono<CommonResponse> register(@RequestHeader("userId") Long userId, @RequestBody Restaurant restaurant){
+    Mono<CommonResponse<Restaurant>> register(@RequestHeader("userId") Long userId, @RequestBody Restaurant restaurant){
         return restaurantService.register(userId, restaurant)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("注册失败，请换名重试"));
     }
 
     @GetMapping("/info")
-    Mono<CommonResponse> getRestaurant(@RequestHeader("restaurantId") Long restaurantId){
+    Mono<CommonResponse<Restaurant>> getRestaurant(@RequestHeader("restaurantId") Long restaurantId){
         return restaurantService.findByRestaurantId(restaurantId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("查询不存在"));
     }
 
     @GetMapping("/info/{restaurantId}")
-    Mono<CommonResponse> getRestaurantById(@PathVariable("restaurantId") Long restaurantId){
+    Mono<CommonResponse<Restaurant>> getRestaurantById(@PathVariable("restaurantId") Long restaurantId){
         return restaurantService.findByRestaurantId(restaurantId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("查询不存在"));
@@ -59,7 +60,7 @@ public class RestaurantController {
     //此方法获取的是预览
     @JsonView(View.RestaurantPreviewView.class)
     @GetMapping("/info/{pageOffset}/{pageSize}")
-    Mono<CommonResponse> getRestaurants(@PathVariable("pageOffset") int pageOffset, @PathVariable("pageSize") int pageSize){
+    Mono<CommonResponse<List<Restaurant>>> getRestaurants(@PathVariable("pageOffset") int pageOffset, @PathVariable("pageSize") int pageSize){
         return restaurantService.findAllBy(PageRequest.of(pageOffset, pageSize))
                 .collectList()
                 .map(CommonResponse::success);
@@ -67,7 +68,7 @@ public class RestaurantController {
 
     @JsonView(View.RestaurantSearchView.class)
     @GetMapping("/search/{size}/{prefix}")
-    Mono<CommonResponse> searchRestaurants(@PathVariable("size") int size, @PathVariable("prefix") String prefix){
+    Mono<CommonResponse<List<Restaurant>>> searchRestaurants(@PathVariable("size") int size, @PathVariable("prefix") String prefix){
         return restaurantService.findAllByPrefix(prefix, size)
                 .collectList()
                 .map(restaurants -> CommonResponse.success(restaurants))
@@ -86,21 +87,21 @@ public class RestaurantController {
     }
 
     @PatchMapping("/category/add/{name}")
-    Mono<CommonResponse> addCategory(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("name") String name){
+    Mono<CommonResponse<Void>> addCategory(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("name") String name){
         return restaurantService.addCategory(restaurantId, name)
                 .map(restaurant -> CommonResponse.success())
                 .defaultIfEmpty(CommonResponse.error("请检查分类添加规则"));
     }
 
     @PatchMapping("/category/delete/{index}")
-    Mono<CommonResponse> deleteCategory(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("index") Integer index){
+    Mono<CommonResponse<Void>> deleteCategory(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("index") Integer index){
         return restaurantService.deleteCategory(restaurantId, index)
                 .map(restaurant -> CommonResponse.success())
                 .defaultIfEmpty(CommonResponse.error("删除失败，请检查参数"));
     }
 
     @PatchMapping("/category/update/{index}/{name}")
-    Mono<CommonResponse> updateCategoryName(
+    Mono<CommonResponse<Restaurant>> updateCategoryName(
             @RequestHeader("restaurantId") Long restaurantId,
             @PathVariable("index") Integer index,
             @PathVariable("name") String name
@@ -111,7 +112,7 @@ public class RestaurantController {
     }
 
     @PutMapping("/upload/image")
-    Mono<CommonResponse> uploadImage(
+    Mono<CommonResponse<String>> uploadImage(
             @RequestHeader("restaurantId") Long restaurantId,
             @RequestPart("image") FilePart imagePart
     ){
@@ -133,19 +134,19 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/order/delete/{orderId}")
-    Mono<CommonResponse> rejectOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
+    Mono<CommonResponse<Void>> rejectOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
         return orderService.rejectOrder(restaurantId, orderId).thenReturn(CommonResponse.success());
     }
 
     @GetMapping("/order/take/{orderId}")
-    Mono<CommonResponse> getNotTakenOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
+    Mono<CommonResponse<Order>> getNotTakenOrder(@RequestHeader("restaurantId") Long restaurantId, @PathVariable("orderId") String orderId){
         return orderService.findNotTakenOrder(restaurantId, orderId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("未查询到该订单"));
     }
 
     @PatchMapping("/menu/add/{index}")
-    Mono<CommonResponse> add(
+    Mono<CommonResponse<Menu>> add(
             @RequestHeader("restaurantId") Long restaurantId,
             @RequestBody Menu menu,
             @PathVariable("index") int categoryIndex
@@ -158,7 +159,7 @@ public class RestaurantController {
     }
 
     @PatchMapping("/menu/update/{categoryIndex}/{menuIndex}")
-    Mono<CommonResponse> update(
+    Mono<CommonResponse<Void>> update(
             @RequestHeader("restaurantId") Long restaurantId,
             @RequestBody Menu menu,
             @PathVariable("categoryIndex") int categoryIndex,
@@ -179,7 +180,7 @@ public class RestaurantController {
     }
 
     @PutMapping("/menu/upload/image/{categoryIndex}/{menuIndex}")
-    Mono<CommonResponse> uploadMenuImage(
+    Mono<CommonResponse<String>> uploadMenuImage(
             @RequestHeader("restaurantId") Long restaurantId,
             @PathVariable("categoryIndex") int categoryIndex,
             @PathVariable("menuIndex") int menuIndex,

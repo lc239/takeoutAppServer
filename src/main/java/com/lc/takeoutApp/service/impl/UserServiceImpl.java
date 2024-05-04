@@ -1,7 +1,11 @@
 package com.lc.takeoutApp.service.impl;
 
+import com.lc.takeoutApp.pojo.DeliveryMan;
 import com.lc.takeoutApp.pojo.User;
+import com.lc.takeoutApp.pojo.UserDelivery;
 import com.lc.takeoutApp.pojo.jsonEntity.Address;
+import com.lc.takeoutApp.repository.DeliveryManRepository;
+import com.lc.takeoutApp.repository.UserDeliveryRepository;
 import com.lc.takeoutApp.repository.UserRepository;
 import com.lc.takeoutApp.service.UserService;
 import com.lc.takeoutApp.utils.AliOssUtil;
@@ -30,6 +34,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     AliOssUtil aliOssUtil;
 
+    @Autowired
+    UserDeliveryRepository userDeliveryRepository;
+
+    @Autowired
+    DeliveryManRepository deliveryManRepository;
+
     @Override
     public Mono<User> findByPhone(String phone) {
         return userRepository.findByPhone(phone);
@@ -42,18 +52,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<User> register(User user) {
+        if(user.getUsername().length() > 10) return Mono.error(new Throwable("用户名不能大于10"));
         return userRepository.findByPhone(user.getPhone()).hasElement().flatMap(aBoolean -> {
             if(aBoolean){
-                return Mono.empty();
+                return Mono.error(new Throwable("手机号重复")); //手机号对应一个用户
+            }else if(user.getIsSeller() && user.getIsDeliveryMan()){
+                return Mono.error(new Throwable("参数错误")); //确保参数正确
             }
             else{
                 user.setPassword(Md5Util.md5DigestAsHex(user.getPassword()));// 密码加密
                 //初始化
                 user.setAddresses(new ArrayList<>());
                 user.setAvatarFilename(DEFAULT_AVATAR_FILENAME);
-                user.setIsDeliveryMan(false);
-                user.setIsSeller(false);
-                return userRepository.save(user);
+                return userRepository.save(user).doOnNext(user1 -> {
+                    //注册骑手
+                    if(user1.getIsDeliveryMan()){
+                        deliveryManRepository.save(new DeliveryMan(null, 0L)).doOnNext(deliveryMan -> {
+                            userDeliveryRepository.save(new UserDelivery(null, user1.getId(), deliveryMan.getId())).subscribe();
+                        }).subscribe();
+                    }
+                });
             }
         });
     }

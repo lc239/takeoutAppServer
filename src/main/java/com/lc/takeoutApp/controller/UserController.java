@@ -33,7 +33,7 @@ public class UserController {
     RestaurantCommentService commentService;
 
     @GetMapping("/info")
-    Mono<CommonResponse> getUserInfo(@RequestHeader("userId") Long userId){
+    Mono<CommonResponse<User>> getUserInfo(@RequestHeader("userId") Long userId){
         return userService.findById(userId)
                 .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("用户不存在"));
@@ -41,20 +41,20 @@ public class UserController {
 
 //    注册成功返回两个token
     @PostMapping("/register")
-    Mono<CommonResponse> register(@RequestBody User formUser){
+    Mono<CommonResponse<Tokens>> register(@RequestBody User formUser){
         return userService.register(formUser).map(user -> {
             Tokens tokens = Tokens.genTokensById(user.getId());
             userService.setToken(tokens.getToken(), user.getId().toString(), Duration.ofDays(2))
                     .concatWith(userService.setToken(tokens.getRefreshToken(), user.getId().toString(), Duration.ofDays(4)))
                     .subscribe();
             return CommonResponse.success(tokens);
-        }).defaultIfEmpty(CommonResponse.error("此手机号已注册"));
+        }).onErrorResume(throwable -> Mono.just(CommonResponse.error(throwable.getMessage())));
     }
 
     //登录成功返回两个token
     @PostMapping("/login")
-    Mono<CommonResponse> login(@RequestBody User loginUser){
-        return userService.findByPhone(loginUser.getPhone()).map(user -> {
+    Mono<CommonResponse<Tokens>> login(@RequestBody User loginUser){
+        return userService.findByPhone(loginUser.getPhone()).flatMap(user -> {
             if(Md5Util.md5DigestAsHex(loginUser.getPassword()).equals(user.getPassword())){
                 Tokens tokens = Tokens.genTokensById(user.getId());
                 //保存token到redis
@@ -62,12 +62,13 @@ public class UserController {
                         .concatWith(userService.setToken(tokens.getRefreshToken(), user.getId().toString(), Duration.ofDays(4)))
                         .reduce((aBoolean, aBoolean2) -> aBoolean && aBoolean2)
                         .subscribe();
-                return CommonResponse.success(tokens);
+                return Mono.just(CommonResponse.success(tokens));
             }
             else{
-                return CommonResponse.error("密码错误");
+                return Mono.error(new Throwable("密码错误"));
             }
-        }).defaultIfEmpty(CommonResponse.error(2, "该手机号未注册")).onErrorReturn(CommonResponse.error(3, "数据库错误"));
+        }).onErrorResume(throwable -> Mono.just(CommonResponse.error(throwable.getMessage())))
+                .defaultIfEmpty(CommonResponse.error(2, "该手机号未注册"));
     }
 
     //刷新token
@@ -83,7 +84,7 @@ public class UserController {
 
     //isSeller是0,1分别表示骑手和商家，set是0,1表示删除或注册
     @PutMapping("/role/{isSeller}/{set}")
-    Mono<CommonResponse> changeRole(
+    Mono<CommonResponse<User>> changeRole(
             @RequestHeader("userId") Long userId,
             @PathVariable("isSeller") Boolean isSeller,
             @PathVariable("set") Boolean set
@@ -92,18 +93,18 @@ public class UserController {
     }
 
     @PutMapping("/upload/avatar")
-    Mono<CommonResponse> uploadAvatar(
+    Mono<CommonResponse<String>> uploadAvatar(
             @RequestHeader("userId") Long userId,
             @RequestPart("avatar") FilePart avatarPart
     ){
         return DataBufferUtils.join(avatarPart.content())
                 .flatMap(dataBuffer -> userService.uploadAvatar(userId, avatarPart.filename(), dataBuffer.asInputStream()))
-                .map(s -> CommonResponse.success(s))
+                .map(CommonResponse::success)
                 .defaultIfEmpty(CommonResponse.error("参数错误"));
     }
 
     @GetMapping("/orders/{pageOffset}/{pageSize}")
-    Mono<CommonResponse> getOrders(
+    Mono<CommonResponse<List<Order>>> getOrders(
             @RequestHeader("userId") Long userId,
             @PathVariable("pageOffset") int pageOffset,
             @PathVariable("pageSize") int pageSize
@@ -126,10 +127,10 @@ public class UserController {
                 .defaultIfEmpty(CommonResponse.error("下单失败，商家可能已下线"));
     }
 
-    @DeleteMapping("/order/cancel/{orderId}")
-    Mono<CommonResponse> cancelOrder(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId){
-        return null;
-    }
+//    @DeleteMapping("/order/cancel/{orderId}")
+//    Mono<CommonResponse> cancelOrder(@RequestHeader("userId") Long userId, @PathVariable("orderId") String orderId){
+//        return null;
+//    }
 
     @PutMapping("/order/comment/{orderId}")
     Mono<CommonResponse<RestaurantComment>> commentOrder(
@@ -144,7 +145,7 @@ public class UserController {
     }
 
     @PutMapping("/update/username")
-    Mono<CommonResponse> updateUsername(@RequestHeader("userId") Long userId, @RequestBody User user){
+    Mono<CommonResponse<Void>> updateUsername(@RequestHeader("userId") Long userId, @RequestBody User user){
         if(user.getUsername().length() > 10 || user.getUsername().isEmpty()){
             return Mono.just(CommonResponse.error("用户名格式不正确"));
         }
@@ -154,14 +155,14 @@ public class UserController {
     }
 
     @PatchMapping("/address/add")
-    Mono<CommonResponse> addAddress(@RequestHeader("userId") Long userId, @RequestBody Address address){
+    Mono<CommonResponse<Void>> addAddress(@RequestHeader("userId") Long userId, @RequestBody Address address){
         return userService.addAddress(userId, address)
                 .map(user -> CommonResponse.success())
                 .defaultIfEmpty(CommonResponse.error("请检查添加地址规则"));
     }
 
     @PutMapping("/address/set")
-    Mono<CommonResponse> setAddress(@RequestHeader("userId") Long userId, @RequestBody ArrayList<Address> addresses){
+    Mono<CommonResponse<Void>> setAddress(@RequestHeader("userId") Long userId, @RequestBody ArrayList<Address> addresses){
         return userService.setAddress(userId, addresses).hasElement().map(aBoolean -> {
             if(aBoolean) return CommonResponse.success();
             else return CommonResponse.error("地址规则有误");

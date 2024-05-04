@@ -13,8 +13,6 @@ public class DeliveryMan {
     @Id
     @JsonIgnore
     private Long id;
-    @JsonIgnore
-    private Long userId;
     private Long completeCount;
 
     public Long completeOne(){

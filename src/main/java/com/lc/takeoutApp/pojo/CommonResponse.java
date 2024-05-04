@@ -19,15 +19,15 @@ public class CommonResponse<T> {
         return new CommonResponse<>(0, "操作成功", data);
     }
 
-    public static CommonResponse success(){
-        return new CommonResponse(0, "操作成功", null);
+    public static CommonResponse<Void> success(){
+        return new CommonResponse<>(0, "操作成功", null);
     }
 
-    public static CommonResponse error(String message){
-        return new CommonResponse(1, message, null);
+    public static <E> CommonResponse<E> error(String message){
+        return new CommonResponse<>(1, message, null);
     }
 
-    public static CommonResponse error(Integer code, String message){
-        return new CommonResponse(code, message, null);
+    public static <E> CommonResponse<E> error(Integer code, String message){
+        return new CommonResponse<>(code, message, null);
     }
 }

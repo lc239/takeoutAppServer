@@ -15,29 +15,26 @@ import reactor.core.publisher.Mono;
 public class DeliveryServiceImpl implements DeliveryService {
 
     @Autowired
-    UserService userService;
-
-    @Autowired
     DeliveryManRepository deliveryManRepository;
 
     @Autowired
     OrderService orderService;
 
     @Override
-    public Mono<DeliveryMan> findByUserId(Long userId) {
-        return deliveryManRepository.findByUserId(userId);
+    public Mono<DeliveryMan> findById(Long id) {
+        return deliveryManRepository.findById(id);
     }
 
-    @Override
-    public Mono<DeliveryMan> register(Long userId) {
-        return userService.changeRole(userId, false, true)
-                .flatMap(user -> deliveryManRepository.save(new DeliveryMan(null, userId, 0L)));
-    }
+//    @Override
+//    public Mono<DeliveryMan> register(Long userId) {
+//        return userService.changeRole(userId, false, true)
+//                .flatMap(user -> deliveryManRepository.save(new DeliveryMan(null, userId, 0L)));
+//    }
 
     @Override
-    public Mono<DeliveryMan> completeOrder(Long userId, String orderId) {
-        return orderService.completeOrder(userId, orderId)
-                .flatMap(order -> deliveryManRepository.findByUserId(userId))
+    public Mono<DeliveryMan> completeOrder(Long deliveryId, String orderId) {
+        return orderService.completeOrder(deliveryId, orderId)
+                .flatMap(order -> deliveryManRepository.findById(deliveryId))
                 .doOnNext(DeliveryMan::completeOne)
                 .flatMap(deliveryMan -> deliveryManRepository.save(deliveryMan));
     }
